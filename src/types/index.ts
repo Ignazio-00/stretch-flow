@@ -29,6 +29,7 @@ export interface UserProgress {
   longestStreak: number;
   lastSessionDate?: Date;
   weeklyGoal: number; // sessions per week
+  weeklySessionCount: number; // sessions completed this week
   achievements: Achievement[];
 }
 

@@ -1,17 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAppStore } from "@/store/useAppStore";
 import { useTimer } from "@/hooks/useTimer";
 import { formatTime } from "@/lib/utils";
-import { useAppStore } from "@/store/useAppStore";
-import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+
+type ExercisePhase =
+  | "preparation"
+  | "exercise"
+  | "completed"
+  | "session-complete";
 
 export default function SessionPage() {
   const router = useRouter();
   const { currentSession, completeSession } = useAppStore();
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [currentPhase, setCurrentPhase] =
+    useState<ExercisePhase>("preparation");
+  const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
 
   const {
     isRunning,
@@ -23,9 +31,7 @@ export default function SessionPage() {
     pauseTimer,
     resumeTimer,
     stopTimer,
-    nextStep,
-    previousStep,
-    // resetTimer,
+    resetTimer,
   } = useTimer();
 
   useEffect(() => {
@@ -33,55 +39,61 @@ export default function SessionPage() {
       router.push("/");
       return;
     }
-
-    // Start the first exercise
-    if (currentSession.exercises.length > 0) {
-      startTimer(currentSession.exercises[0]);
-    }
-  }, [currentSession, router, startTimer]);
+  }, [currentSession, router]);
 
   useEffect(() => {
-    // When timer finishes, move to next exercise or complete session
-    if (timeRemaining === 0 && currentExercise && !isRunning) {
-      if (currentExerciseIndex < (currentSession?.exercises.length || 0) - 1) {
-        // Move to next exercise
-        setTimeout(() => {
-          setCurrentExerciseIndex((prev) => prev + 1);
-          const nextExercise =
-            currentSession?.exercises[currentExerciseIndex + 1];
-          if (nextExercise) {
-            startTimer(nextExercise);
-          }
-        }, 1000);
-      } else {
-        // Complete session
-        setTimeout(() => {
-          setShowCompleted(true);
-          completeSession();
-        }, 1000);
-      }
+    // When timer finishes during exercise phase, mark as completed
+    if (timeRemaining === 0 && currentPhase === "exercise") {
+      setCurrentPhase("completed");
     }
-  }, [
-    timeRemaining,
-    currentExercise,
-    isRunning,
-    currentExerciseIndex,
-    currentSession,
-    startTimer,
-    completeSession,
-  ]);
+  }, [timeRemaining, currentPhase]);
 
-  const handleSkipExercise = () => {
-    if (currentExerciseIndex < (currentSession?.exercises.length || 0) - 1) {
-      setCurrentExerciseIndex((prev) => prev + 1);
-      const nextExercise = currentSession?.exercises[currentExerciseIndex + 1];
-      if (nextExercise) {
-        startTimer(nextExercise);
-      }
+  const handleStartExercise = () => {
+    const exercise = currentSession?.exercises[currentExerciseIndex];
+    if (exercise) {
+      setCurrentPhase("exercise");
+      startTimer(exercise);
+    }
+  };
+
+  const handlePauseResume = () => {
+    if (isRunning) {
+      pauseTimer();
     } else {
-      setShowCompleted(true);
+      resumeTimer();
+    }
+  };
+
+  const handleRestartExercise = () => {
+    const exercise = currentSession?.exercises[currentExerciseIndex];
+    if (exercise) {
+      setCurrentPhase("preparation");
+      setCurrentInstructionIndex(0);
+      stopTimer();
+    }
+  };
+
+  const handleNextExercise = () => {
+    const nextIndex = currentExerciseIndex + 1;
+    const hasMoreExercises =
+      nextIndex < (currentSession?.exercises.length || 0);
+
+    if (hasMoreExercises) {
+      setCurrentExerciseIndex(nextIndex);
+      setCurrentPhase("preparation");
+      setCurrentInstructionIndex(0);
+      stopTimer();
+    } else {
+      setCurrentPhase("session-complete");
       completeSession();
     }
+  };
+
+  const handleSkipExercise = () => {
+    if (currentPhase === "exercise") {
+      stopTimer();
+    }
+    setCurrentPhase("completed");
   };
 
   const handleEndSession = () => {
@@ -93,11 +105,27 @@ export default function SessionPage() {
     router.push("/");
   };
 
+  const handlePreviousInstruction = () => {
+    if (currentInstructionIndex > 0) {
+      setCurrentInstructionIndex(currentInstructionIndex - 1);
+    }
+  };
+
+  const handleNextInstruction = () => {
+    const exercise = currentSession?.exercises[currentExerciseIndex];
+    if (
+      exercise &&
+      currentInstructionIndex < exercise.instructions.length - 1
+    ) {
+      setCurrentInstructionIndex(currentInstructionIndex + 1);
+    }
+  };
+
   if (!currentSession) {
     return null;
   }
 
-  if (showCompleted) {
+  if (currentPhase === "session-complete") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <motion.div
@@ -134,6 +162,7 @@ export default function SessionPage() {
 
   const exercise = currentSession.exercises[currentExerciseIndex];
   const totalExercises = currentSession.exercises.length;
+  const isLastExercise = currentExerciseIndex === totalExercises - 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -181,12 +210,25 @@ export default function SessionPage() {
             </div>
 
             <div className="text-right">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatTime(timeRemaining)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                remaining
-              </p>
+              {currentPhase === "exercise" ? (
+                <>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatTime(timeRemaining)}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    remaining
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatTime(exercise.duration)}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    duration
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -195,7 +237,7 @@ export default function SessionPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentExerciseIndex}
+            key={`${currentExerciseIndex}-${currentPhase}`}
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
@@ -217,95 +259,181 @@ export default function SessionPage() {
               </p>
             </div>
 
-            {/* Timer Progress */}
-            <div className="max-w-md mx-auto">
-              <div className="timer-progress">
-                <div
-                  className="timer-progress-bar"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
-                <span>0s</span>
-                <span>{formatTime(exercise.duration)}</span>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="stretch-card max-w-2xl mx-auto">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                Instructions:
-              </h3>
-              <div className="space-y-3">
-                {exercise.instructions.map((instruction, index) => (
-                  <div
-                    key={`${exercise.id}-instruction-${index}`}
-                    className={`flex items-start space-x-3 p-3 rounded-lg transition-colors ${
-                      index === currentStep
-                        ? "bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500"
-                        : "bg-gray-50 dark:bg-gray-800"
-                    }`}
-                  >
-                    <div
-                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
-                        index === currentStep
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      {index + 1}
+            {/* Phase-specific content */}
+            {currentPhase === "preparation" && (
+              <>
+                {/* Exercise Preview/Illustration Placeholder */}
+                <div className="flex justify-center">
+                  <div className="w-64 h-48 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-700 flex items-center justify-center">
+                    <div className="text-center">
+                      <span className="text-4xl mb-2 block">🧘‍♀️</span>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        Exercise illustration
+                      </p>
                     </div>
-                    <p
-                      className={`exercise-instruction ${
-                        index === currentStep ? "font-medium" : ""
-                      }`}
-                    >
-                      {instruction}
+                  </div>
+                </div>
+
+                {/* Instructions Navigation */}
+                <div className="stretch-card max-w-2xl mx-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Instructions:
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={handlePreviousInstruction}
+                        disabled={currentInstructionIndex === 0}
+                        className="stretch-button-ghost p-2 disabled:opacity-50"
+                      >
+                        ←
+                      </button>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {currentInstructionIndex + 1} of{" "}
+                        {exercise.instructions.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleNextInstruction}
+                        disabled={
+                          currentInstructionIndex ===
+                          exercise.instructions.length - 1
+                        }
+                        className="stretch-button-ghost p-2 disabled:opacity-50"
+                      >
+                        →
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
+                        {currentInstructionIndex + 1}
+                      </div>
+                      <p className="text-lg text-gray-900 dark:text-white leading-relaxed">
+                        {exercise.instructions[currentInstructionIndex]}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Read through all instructions, then start when ready
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Controls */}
-            <div className="flex items-center justify-center space-x-4">
-              <button
-                type="button"
-                onClick={previousStep}
-                disabled={currentStep === 0}
-                className="stretch-button-secondary disabled:opacity-50"
-              >
-                ← Previous Step
-              </button>
+                {/* Start Button */}
+                <div className="text-center">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleStartExercise}
+                    className="stretch-button-primary px-12 py-4 text-lg"
+                  >
+                    Start Exercise ({formatTime(exercise.duration)})
+                  </motion.button>
+                </div>
+              </>
+            )}
 
-              <button
-                type="button"
-                onClick={isRunning ? pauseTimer : resumeTimer}
-                className="stretch-button-primary px-8"
-              >
-                {isRunning ? "Pause" : "Resume"}
-              </button>
+            {currentPhase === "exercise" && (
+              <>
+                {/* Timer Progress */}
+                <div className="max-w-md mx-auto">
+                  <div className="timer-progress">
+                    <div
+                      className="timer-progress-bar"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    <span>0s</span>
+                    <span>{formatTime(exercise.duration)}</span>
+                  </div>
+                </div>
 
-              <button
-                type="button"
-                onClick={nextStep}
-                disabled={currentStep === exercise.instructions.length - 1}
-                className="stretch-button-secondary disabled:opacity-50"
-              >
-                Next Step →
-              </button>
-            </div>
+                {/* Current Instruction */}
+                <div className="stretch-card max-w-2xl mx-auto">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                    Current Step:
+                  </h3>
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+                    <div className="flex items-center justify-center space-x-3 mb-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-medium">
+                        {currentStep + 1}
+                      </div>
+                      <span className="text-sm text-green-600 dark:text-green-400">
+                        Step {currentStep + 1} of {exercise.instructions.length}
+                      </span>
+                    </div>
+                    <p className="text-lg text-gray-900 dark:text-white leading-relaxed">
+                      {exercise.instructions[currentStep]}
+                    </p>
+                  </div>
+                </div>
 
-            {/* Skip Button */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleSkipExercise}
-                className="stretch-button-ghost text-gray-500 dark:text-gray-400"
-              >
-                Skip Exercise
-              </button>
-            </div>
+                {/* Exercise Controls */}
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={handlePauseResume}
+                    className="stretch-button-primary px-8"
+                  >
+                    {isRunning ? "Pause" : "Resume"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSkipExercise}
+                    className="stretch-button-ghost text-gray-500 dark:text-gray-400"
+                  >
+                    Skip Exercise
+                  </button>
+                </div>
+              </>
+            )}
+
+            {currentPhase === "completed" && (
+              <>
+                {/* Exercise Completed Banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center"
+                >
+                  <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200 mb-4">
+                    <span className="text-3xl">✅</span>
+                    <span className="text-xl font-medium">
+                      Exercise Complete!
+                    </span>
+                  </div>
+                  <p className="text-green-700 dark:text-green-300">
+                    Great job completing the {exercise.name}!
+                  </p>
+                </motion.div>
+
+                {/* Completion Controls */}
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={handleRestartExercise}
+                    className="stretch-button-secondary"
+                  >
+                    Restart Exercise
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNextExercise}
+                    className="stretch-button-primary px-8"
+                  >
+                    {isLastExercise ? "Complete Session" : "Next Exercise →"}
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </main>

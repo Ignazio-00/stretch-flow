@@ -51,6 +51,7 @@ const defaultProgress: UserProgress = {
   currentStreak: 0,
   longestStreak: 0,
   weeklyGoal: 5,
+  weeklySessionCount: 0,
   achievements: [],
 };
 
@@ -214,31 +215,15 @@ function calculateProgress(
     completedSessions.reduce((sum, s) => sum + s.totalDuration, 0) / 60
   );
 
-  // Calculate streak
-  const today = new Date();
-  const sortedSessions = completedSessions.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
-  let currentStreak = 0;
-  let checkDate = new Date(today);
-
-  for (const session of sortedSessions) {
-    const sessionDate = new Date(session.date);
-    const daysDiff = Math.floor(
-      (checkDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysDiff <= 1) {
-      currentStreak++;
-      checkDate = sessionDate;
-    } else {
-      break;
-    }
-  }
-
+  // Calculate streak - count consecutive days with at least one session
+  const currentStreak = calculateDayStreak(completedSessions);
   const longestStreak = Math.max(currentProgress.longestStreak, currentStreak);
-  const lastSession = sortedSessions[0];
+  const lastSession = completedSessions.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  )[0];
+
+  // Calculate sessions this week (Monday to Sunday)
+  const weeklySessionCount = calculateWeeklySessionCount(completedSessions);
 
   return {
     ...currentProgress,
@@ -246,6 +231,88 @@ function calculateProgress(
     totalMinutes,
     currentStreak,
     longestStreak,
+    weeklySessionCount,
     lastSessionDate: lastSession ? new Date(lastSession.date) : undefined,
   };
+}
+
+// Helper function to calculate consecutive days with sessions
+function calculateDayStreak(sessions: StretchSession[]): number {
+  if (sessions.length === 0) return 0;
+
+  // Helper to format date as YYYY-MM-DD
+  const formatDate = (date: Date): string => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  // Get unique days with sessions
+  const sessionDays = new Set(
+    sessions.map((session) => formatDate(new Date(session.date)))
+  );
+  const uniqueDays = Array.from(sessionDays).sort().reverse(); // Most recent first
+
+  if (uniqueDays.length === 0) return 0;
+
+  const today = new Date();
+  const todayString = formatDate(today);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayString = formatDate(yesterday);
+
+  // Check if streak is still active (session today or yesterday)
+  const mostRecentDay = uniqueDays[0];
+  if (mostRecentDay !== todayString && mostRecentDay !== yesterdayString) {
+    return 0; // Streak broken - no session today or yesterday
+  }
+
+  // Start counting from today or the most recent session day
+  let streak = 0;
+  let currentDate = new Date(today);
+
+  // If most recent session was yesterday and we don't have one today, start from yesterday
+  if (mostRecentDay === yesterdayString && !sessionDays.has(todayString)) {
+    currentDate = new Date(yesterday);
+  }
+
+  // Count consecutive days backwards
+  while (true) {
+    const currentDateString = formatDate(currentDate);
+
+    if (sessionDays.has(currentDateString)) {
+      streak++;
+      // Move to previous day
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      // No session on this day, streak ends
+      break;
+    }
+  }
+
+  return streak;
+}
+
+// Helper function to calculate sessions in the current week
+function calculateWeeklySessionCount(sessions: StretchSession[]): number {
+  const now = new Date();
+
+  // Get start of current week (Monday)
+  const startOfWeek = new Date(now);
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  startOfWeek.setDate(diff);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Get end of current week (Sunday)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  // Count sessions in this week
+  return sessions.filter((session) => {
+    const sessionDate = new Date(session.date);
+    return sessionDate >= startOfWeek && sessionDate <= endOfWeek;
+  }).length;
 }

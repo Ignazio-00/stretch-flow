@@ -10,7 +10,7 @@ interface ProgressOverviewProps {
 
 export default function ProgressOverview({ progress }: ProgressOverviewProps) {
   const weeklyProgress = Math.min(
-    (progress.totalSessions / progress.weeklyGoal) * 100,
+    (progress.weeklySessionCount / progress.weeklyGoal) * 100,
     100
   );
 
@@ -99,8 +99,7 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-gray-900 dark:text-white">
-                {Math.min(progress.totalSessions, progress.weeklyGoal)}/
-                {progress.weeklyGoal}
+                {progress.weeklySessionCount}/{progress.weeklyGoal}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {Math.round(weeklyProgress)}%
@@ -139,8 +138,9 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps) {
                 -{" "}
                 {formatRelativeDate(
                   new Date(
-                    progress.achievements[progress.achievements.length - 1]
-                      ?.unlockedAt
+                    progress.achievements[
+                      progress.achievements.length - 1
+                    ]?.unlockedAt
                   )
                 )}
               </p>
