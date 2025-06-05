@@ -151,33 +151,11 @@ StretchFlow supports all modern browsers:
 - Safari 14+
 - Edge 90+
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and ensure tests pass
-4. Run code quality checks: `bun run check:fix`
-5. Commit your changes: `git commit -m 'Add amazing feature'`
-6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Icons and illustrations from community contributors
-- Exercise data based on physical therapy best practices
-- Design inspiration from modern wellness applications
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](../../issues) page for existing problems
-2. Create a new issue with detailed description
-3. Include browser information and steps to reproduce
+Build by [Ignazio Balistreri](https://github.com/Ignazio-00)
 
 ---
 

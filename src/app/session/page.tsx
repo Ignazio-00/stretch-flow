@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
 import { useTimer } from "@/hooks/useTimer";
 import { formatTime } from "@/lib/utils";
+import { getQuickSession } from "@/lib/exercises";
 
 type ExercisePhase =
   | "preparation"
@@ -15,11 +16,13 @@ type ExercisePhase =
 
 export default function SessionPage() {
   const router = useRouter();
-  const { currentSession, completeSession } = useAppStore();
+  const searchParams = useSearchParams();
+  const { currentSession, completeSession, startSession } = useAppStore();
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentPhase, setCurrentPhase] =
     useState<ExercisePhase>("preparation");
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     isRunning,
@@ -35,11 +38,24 @@ export default function SessionPage() {
   } = useTimer();
 
   useEffect(() => {
-    if (!currentSession) {
+    const sessionType = searchParams.get("type");
+
+    if (sessionType && !currentSession) {
+      // Handle quick session types
+      const session = getQuickSession(sessionType);
+      if (session) {
+        startSession(session.exercises, sessionType);
+      } else {
+        router.push("/");
+        return;
+      }
+    } else if (!currentSession) {
       router.push("/");
       return;
     }
-  }, [currentSession, router]);
+
+    setIsLoading(false);
+  }, [searchParams, currentSession, router, startSession]);
 
   useEffect(() => {
     // When timer finishes during exercise phase, mark as completed
@@ -121,6 +137,23 @@ export default function SessionPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading your session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentSession) {
     return null;
   }
@@ -133,9 +166,21 @@ export default function SessionPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full text-center"
         >
-          <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl text-white">🎉</span>
-          </div>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-24 h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-4xl text-white"
+            >
+              🎉
+            </motion.span>
+          </motion.div>
 
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Session Complete!
@@ -147,14 +192,31 @@ export default function SessionPage() {
             {formatTime(currentSession.totalDuration)}.
           </p>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleContinue}
-            className="stretch-button-primary w-full"
-          >
-            Continue
-          </motion.button>
+          <div className="space-y-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleContinue}
+              className="stretch-button-primary w-full"
+            >
+              Continue
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (currentSession?.context) {
+                  router.push(`/session?type=${currentSession.context}`);
+                } else {
+                  handleContinue();
+                }
+              }}
+              className="stretch-button-secondary w-full"
+            >
+              Do Another Session
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     );
@@ -163,6 +225,7 @@ export default function SessionPage() {
   const exercise = currentSession.exercises[currentExerciseIndex];
   const totalExercises = currentSession.exercises.length;
   const isLastExercise = currentExerciseIndex === totalExercises - 1;
+  const sessionType = searchParams.get("type");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -194,7 +257,12 @@ export default function SessionPage() {
 
               <div>
                 <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Exercise {currentExerciseIndex + 1} of {totalExercises}
+                  {currentSession?.context
+                    ? currentSession.context.charAt(0).toUpperCase() +
+                      currentSession.context.slice(1).replace(/([A-Z])/g, " $1")
+                    : `Exercise ${
+                        currentExerciseIndex + 1
+                      } of ${totalExercises}`}
                 </h1>
                 <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                   <div

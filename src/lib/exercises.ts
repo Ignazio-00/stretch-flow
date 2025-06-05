@@ -225,3 +225,48 @@ export function getRandomQuickStretch(): StretchExercise[] {
   const shuffled = [...quickExercises].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 2); // Return 2 random quick exercises
 }
+
+export function getQuickSession(type: string) {
+  switch (type) {
+    case "quick":
+      return {
+        name: "Quick Stretch",
+        exercises: getRandomQuickStretch(),
+      };
+    case "desk":
+      return quickStretchSessions.deskBreak;
+    case "morning":
+      return {
+        name: "Morning Flow",
+        exercises: stretchExercises.filter((ex) =>
+          ["morning-energizer", "neck-side-stretch", "shoulder-rolls"].includes(
+            ex.id
+          )
+        ),
+      };
+    case "evening":
+      return {
+        name: "Evening Wind-Down",
+        exercises: stretchExercises.filter((ex) =>
+          [
+            "neck-forward-stretch",
+            "seated-spinal-twist",
+            "figure-four-stretch",
+          ].includes(ex.id)
+        ),
+      };
+    case "posture":
+      return {
+        name: "Posture Reset",
+        exercises: stretchExercises.filter((ex) =>
+          [
+            "cat-cow-stretch",
+            "cross-body-shoulder-stretch",
+            "hip-flexor-stretch",
+          ].includes(ex.id)
+        ),
+      };
+    default:
+      return null;
+  }
+}
