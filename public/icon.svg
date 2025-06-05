@@ -1,0 +1,33 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Stretching figure -->
+  <g transform="translate(48, 48)">
+    <!-- Head -->
+    <circle cx="48" cy="24" r="12" fill="white" opacity="0.9"/>
+    
+    <!-- Body -->
+    <rect x="44" y="36" width="8" height="32" rx="4" fill="white" opacity="0.9"/>
+    
+    <!-- Arms stretching -->
+    <rect x="20" y="40" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
+    <rect x="52" y="40" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
+    
+    <!-- Legs -->
+    <rect x="40" y="68" width="4" height="20" rx="2" fill="white" opacity="0.9"/>
+    <rect x="52" y="68" width="4" height="20" rx="2" fill="white" opacity="0.9"/>
+    
+    <!-- Flow lines -->
+    <path d="M16 60 Q24 56 32 60 Q40 64 48 60" stroke="white" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M48 60 Q56 64 64 60 Q72 56 80 60" stroke="white" stroke-width="2" fill="none" opacity="0.6"/>
+  </g>
+  
+  <!-- Letter S -->
+  <text x="96" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">S</text>
+</svg> 

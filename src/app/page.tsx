@@ -1,103 +1,198 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import ProgressOverview from "@/components/ProgressOverview";
+import QuickActionCard from "@/components/QuickActionCard";
+import RecentSessions from "@/components/RecentSessions";
+import { getRandomQuickStretch, quickStretchSessions } from "@/lib/exercises";
+import { getGreeting } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function HomePage() {
+  const router = useRouter();
+  const { user, initializeApp, startSession } = useAppStore();
+  const greeting = getGreeting();
+
+  useEffect(() => {
+    initializeApp();
+  }, [initializeApp]);
+
+  const handleQuickStretch = () => {
+    const exercises = getRandomQuickStretch();
+    startSession(exercises, "quick-stretch");
+    router.push("/session");
+  };
+
+  const handleSessionStart = (
+    sessionType: keyof typeof quickStretchSessions
+  ) => {
+    const session = quickStretchSessions[sessionType];
+    startSession(session.exercises, sessionType);
+    router.push("/session");
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm dark:bg-gray-900/80 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  StretchFlow
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {greeting}! Ready to stretch?
+                </p>
+              </div>
+            </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="flex items-center space-x-2">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {user.progress.currentStreak} day streak
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user.progress.totalSessions} sessions
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">🔥</span>
+              </div>
+            </div>
+          </div>
         </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Actions */}
+        <section className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Quick Start
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <QuickActionCard
+                title="Quick Stretch"
+                description="30-60 second random stretches"
+                duration="30-60s"
+                icon="⚡"
+                color="from-blue-500 to-cyan-500"
+                onClick={handleQuickStretch}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <QuickActionCard
+                title="Desk Break"
+                description="Perfect for work breaks"
+                duration="2 min"
+                icon="💻"
+                color="from-green-500 to-emerald-500"
+                onClick={() => handleSessionStart("deskBreak")}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <QuickActionCard
+                title="Pre-Meeting"
+                description="Energize before meetings"
+                duration="90s"
+                icon="🚀"
+                color="from-purple-500 to-pink-500"
+                onClick={() => handleSessionStart("meetingPrep")}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <QuickActionCard
+                title="Afternoon Boost"
+                description="Beat the afternoon slump"
+                duration="3 min"
+                icon="☀️"
+                color="from-orange-500 to-red-500"
+                onClick={() => handleSessionStart("afternoonBoost")}
+              />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Progress Overview */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mb-8"
+        >
+          <ProgressOverview progress={user.progress} />
+        </motion.section>
+
+        {/* Recent Sessions */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mb-8"
+        >
+          <RecentSessions />
+        </motion.section>
+
+        {/* Tips Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 rounded-2xl p-6 border border-blue-200 dark:border-blue-800"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+            💡 Stretching Tips
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <strong>Hold for 15-30 seconds:</strong> This allows muscles to
+                relax and lengthen properly.
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <strong>Breathe deeply:</strong> Focus on slow, deep breaths to
+                enhance relaxation.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <strong>Don&apos;t bounce:</strong> Static stretches are safer
+                and more effective.
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <strong>Listen to your body:</strong> Stretch should feel good,
+                not painful.
+              </p>
+            </div>
+          </div>
+        </motion.section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

@@ -6,22 +6,37 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "biome lint src/",
+    "lint:fix": "biome lint --write src/",
+    "format": "biome format --write src/",
+    "format:check": "biome format src/",
+    "type-check": "tsc --noEmit",
+    "check": "biome check src/",
+    "check:fix": "biome check --write src/"
   },
   "dependencies": {
+    "@next/bundle-analyzer": "^15.3.3",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.16.0",
+    "next": "15.3.3",
+    "next-pwa": "^5.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.3"
+    "tailwind-merge": "^3.3.0",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@biomejs/biome": "^1.9.4",
+    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
-    "@eslint/eslintrc": "^3"
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3",
+    "typescript": "^5",
+    "workbox-webpack-plugin": "^7.3.0"
   }
 }
