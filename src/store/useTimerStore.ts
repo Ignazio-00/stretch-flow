@@ -46,9 +46,25 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   tick: () => {
-    const { isRunning, timeRemaining } = get();
+    const { isRunning, timeRemaining, currentExercise, currentStep } = get();
     if (isRunning && timeRemaining > 0) {
       set({ timeRemaining: timeRemaining - 1 });
+
+      // Auto-advance to next step based on time
+      if (currentExercise && currentExercise.instructions.length > 1) {
+        const stepDuration = Math.floor(
+          currentExercise.duration / currentExercise.instructions.length
+        );
+        const elapsedTime = currentExercise.duration - timeRemaining + 1;
+        const expectedStep = Math.min(
+          Math.floor(elapsedTime / stepDuration),
+          currentExercise.instructions.length - 1
+        );
+
+        if (expectedStep !== currentStep) {
+          set({ currentStep: expectedStep });
+        }
+      }
     } else if (timeRemaining === 0) {
       set({ isRunning: false });
     }

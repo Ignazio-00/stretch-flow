@@ -10,6 +10,8 @@ export const stretchExercises: StretchExercise[] = [
     category: "neck",
     targetMuscles: ["Upper trapezius", "Levator scapulae"],
     difficulty: "beginner",
+    imageUrl:
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&auto=format",
     instructions: [
       "Sit or stand with your spine straight",
       "Slowly tilt your head to the right, bringing your ear toward your shoulder",
@@ -42,6 +44,8 @@ export const stretchExercises: StretchExercise[] = [
     category: "shoulders",
     targetMuscles: ["Deltoids", "Trapezius", "Rhomboids"],
     difficulty: "beginner",
+    imageUrl:
+      "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&auto=format",
     instructions: [
       "Stand with feet hip-width apart",
       "Lift your shoulders up toward your ears",
@@ -74,6 +78,8 @@ export const stretchExercises: StretchExercise[] = [
     category: "back",
     targetMuscles: ["Erector spinae", "Multifidus", "Abdominals"],
     difficulty: "beginner",
+    imageUrl:
+      "https://images.unsplash.com/photo-1506629905877-4d8c9f92ddb0?w=400&h=400&fit=crop&auto=format",
     instructions: [
       "Get on your hands and knees",
       "Arch your back and look up (Cow pose)",

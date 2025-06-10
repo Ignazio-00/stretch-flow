@@ -312,14 +312,24 @@ export default function SessionPage() {
             {/* Phase-specific content */}
             {currentPhase === "preparation" && (
               <>
-                {/* Exercise Preview/Illustration Placeholder */}
+                {/* Exercise Preview/Illustration */}
                 <div className="flex justify-center">
-                  <div className="w-64 h-48 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-700 flex items-center justify-center">
-                    <div className="text-center">
-                      <span className="text-4xl mb-2 block">🧘‍♀️</span>
-                      <p className="text-sm text-blue-600 dark:text-blue-400">
-                        Exercise illustration
-                      </p>
+                  <div className="w-80 h-64 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 flex items-center justify-center p-6">
+                      {exercise.imageUrl ? (
+                        <img
+                          src={exercise.imageUrl}
+                          alt={`${exercise.name} demonstration`}
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-center">
+                          <span className="text-6xl mb-4 block">🧘‍♀️</span>
+                          <p className="text-blue-600 dark:text-blue-400 font-medium">
+                            {exercise.name}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -374,56 +384,184 @@ export default function SessionPage() {
 
             {currentPhase === "exercise" && (
               <>
-                {/* Timer Progress */}
-                <div className="max-w-md mx-auto">
-                  <div className="timer-progress">
-                    <div
-                      className="timer-progress-bar"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    <span>0s</span>
-                    <span>{formatTime(exercise.duration)}</span>
-                  </div>
-                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                  {/* Exercise Illustration - Left Column */}
+                  <div className="lg:col-span-1">
+                    <div className="sticky top-8">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        {/* Exercise Image */}
+                        <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 flex items-center justify-center p-8">
+                          {exercise.imageUrl ? (
+                            <img
+                              src={exercise.imageUrl}
+                              alt={`${exercise.name} demonstration`}
+                              className="w-full h-full object-contain rounded-lg"
+                            />
+                          ) : (
+                            <div className="text-center">
+                              <span className="text-6xl mb-4 block">🧘‍♀️</span>
+                              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                                {exercise.name}
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
-                {/* Current Instruction */}
-                <div className="stretch-card max-w-2xl mx-auto">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                    Current Step:
-                  </h3>
-                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
-                    <div className="flex items-center justify-center space-x-3 mb-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-medium">
-                        {currentStep + 1}
+                        {/* Exercise Info */}
+                        <div className="p-6">
+                          <div className="text-center mb-4">
+                            <div
+                              className={`category-${exercise.category} inline-block mb-2`}
+                            >
+                              {exercise.category}
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                              {exercise.name}
+                            </h3>
+                          </div>
+
+                          {/* Timer Progress */}
+                          <div className="mb-4">
+                            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              <span>Progress</span>
+                              <span>{formatTime(timeRemaining)} remaining</span>
+                            </div>
+                            <div className="timer-progress">
+                              <div
+                                className="timer-progress-bar"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Exercise Controls */}
+                          <div className="space-y-3">
+                            <button
+                              type="button"
+                              onClick={handlePauseResume}
+                              className="stretch-button-primary w-full"
+                            >
+                              {isRunning ? "Pause" : "Resume"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSkipExercise}
+                              className="stretch-button-ghost w-full text-gray-500 dark:text-gray-400"
+                            >
+                              Skip Exercise
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm text-green-600 dark:text-green-400">
-                        Step {currentStep + 1} of {exercise.instructions.length}
-                      </span>
                     </div>
-                    <p className="text-lg text-gray-900 dark:text-white leading-relaxed">
-                      {exercise.instructions[currentStep]}
-                    </p>
                   </div>
-                </div>
 
-                {/* Exercise Controls */}
-                <div className="flex items-center justify-center space-x-4">
-                  <button
-                    type="button"
-                    onClick={handlePauseResume}
-                    className="stretch-button-primary px-8"
-                  >
-                    {isRunning ? "Pause" : "Resume"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSkipExercise}
-                    className="stretch-button-ghost text-gray-500 dark:text-gray-400"
-                  >
-                    Skip Exercise
-                  </button>
+                  {/* Instructions - Right Columns */}
+                  <div className="lg:col-span-2">
+                    <div className="space-y-6">
+                      <div className="text-center mb-8">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                          Follow These Steps
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          Perform each step smoothly and listen to your body
+                        </p>
+                      </div>
+
+                      {/* All Instructions Displayed */}
+                      <div className="space-y-4">
+                        {exercise.instructions.map((instruction, index) => (
+                          <motion.div
+                            key={`exercise-${
+                              exercise.id || exercise.name
+                            }-step-${index}`}
+                            initial={{ opacity: 0.6, scale: 0.95 }}
+                            animate={{
+                              opacity: index === currentStep ? 1 : 0.6,
+                              scale: index === currentStep ? 1 : 0.95,
+                              borderColor:
+                                index === currentStep
+                                  ? "#10b981"
+                                  : "transparent",
+                            }}
+                            transition={{ duration: 0.3 }}
+                            className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                              index === currentStep
+                                ? "bg-green-50 dark:bg-green-950 border-green-500 shadow-lg"
+                                : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm"
+                            }`}
+                          >
+                            {/* Step indicator for current step */}
+                            {index === currentStep && (
+                              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
+                            )}
+
+                            <div className="p-6">
+                              <div className="flex items-start space-x-4">
+                                <div
+                                  className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all duration-300 ${
+                                    index === currentStep
+                                      ? "bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg scale-110"
+                                      : "bg-gradient-to-r from-gray-400 to-gray-500"
+                                  }`}
+                                >
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span
+                                      className={`text-sm font-medium transition-colors duration-300 ${
+                                        index === currentStep
+                                          ? "text-green-600 dark:text-green-400"
+                                          : "text-gray-500 dark:text-gray-400"
+                                      }`}
+                                    >
+                                      Step {index + 1} of{" "}
+                                      {exercise.instructions.length}
+                                      {index === currentStep && " - Active"}
+                                    </span>
+                                    {index === currentStep && (
+                                      <motion.div
+                                        animate={{ scale: [1, 1.2, 1] }}
+                                        transition={{
+                                          duration: 2,
+                                          repeat: Number.POSITIVE_INFINITY,
+                                        }}
+                                        className="w-3 h-3 bg-green-500 rounded-full"
+                                      />
+                                    )}
+                                  </div>
+                                  <p
+                                    className={`leading-relaxed transition-colors duration-300 ${
+                                      index === currentStep
+                                        ? "text-gray-900 dark:text-white text-lg font-medium"
+                                        : "text-gray-700 dark:text-gray-300"
+                                    }`}
+                                  >
+                                    {instruction}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Breathing reminder */}
+                      <motion.div
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{
+                          duration: 3,
+                          repeat: Number.POSITIVE_INFINITY,
+                        }}
+                        className="text-center py-6"
+                      >
+                        <p className="text-gray-600 dark:text-gray-400 text-lg">
+                          💨 Remember to breathe deeply and steadily
+                        </p>
+                      </motion.div>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
