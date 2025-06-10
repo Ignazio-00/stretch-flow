@@ -21,7 +21,7 @@ export default function SessionPage() {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentPhase, setCurrentPhase] =
     useState<ExercisePhase>("preparation");
-  const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const {
@@ -84,7 +84,6 @@ export default function SessionPage() {
     const exercise = currentSession?.exercises[currentExerciseIndex];
     if (exercise) {
       setCurrentPhase("preparation");
-      setCurrentInstructionIndex(0);
       stopTimer();
     }
   };
@@ -97,7 +96,6 @@ export default function SessionPage() {
     if (hasMoreExercises) {
       setCurrentExerciseIndex(nextIndex);
       setCurrentPhase("preparation");
-      setCurrentInstructionIndex(0);
       stopTimer();
     } else {
       setCurrentPhase("session-complete");
@@ -119,22 +117,6 @@ export default function SessionPage() {
 
   const handleContinue = () => {
     router.push("/");
-  };
-
-  const handlePreviousInstruction = () => {
-    if (currentInstructionIndex > 0) {
-      setCurrentInstructionIndex(currentInstructionIndex - 1);
-    }
-  };
-
-  const handleNextInstruction = () => {
-    const exercise = currentSession?.exercises[currentExerciseIndex];
-    if (
-      exercise &&
-      currentInstructionIndex < exercise.instructions.length - 1
-    ) {
-      setCurrentInstructionIndex(currentInstructionIndex + 1);
-    }
   };
 
   if (isLoading) {
@@ -342,53 +324,36 @@ export default function SessionPage() {
                   </div>
                 </div>
 
-                {/* Instructions Navigation */}
+                {/* All Instructions */}
                 <div className="stretch-card max-w-2xl mx-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Instructions:
+                  <div className="mb-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-center">
+                      Exercise Steps:
                     </h3>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        type="button"
-                        onClick={handlePreviousInstruction}
-                        disabled={currentInstructionIndex === 0}
-                        className="stretch-button-ghost p-2 disabled:opacity-50"
-                      >
-                        ←
-                      </button>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {currentInstructionIndex + 1} of{" "}
-                        {exercise.instructions.length}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleNextInstruction}
-                        disabled={
-                          currentInstructionIndex ===
-                          exercise.instructions.length - 1
-                        }
-                        className="stretch-button-ghost p-2 disabled:opacity-50"
-                      >
-                        →
-                      </button>
-                    </div>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
-                        {currentInstructionIndex + 1}
+                  <div className="space-y-4">
+                    {exercise.instructions.map((instruction, index) => (
+                      <div
+                        key={`${exercise.id || exercise.name}-step-${index}`}
+                        className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
+                            {index + 1}
+                          </div>
+                          <p className="text-gray-900 dark:text-white leading-relaxed">
+                            {instruction}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-lg text-gray-900 dark:text-white leading-relaxed">
-                        {exercise.instructions[currentInstructionIndex]}
-                      </p>
-                    </div>
+                    ))}
                   </div>
 
-                  <div className="mt-4 text-center">
+                  <div className="mt-6 text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Read through all instructions, then start when ready
+                      Follow these {exercise.instructions.length} steps during
+                      the exercise
                     </p>
                   </div>
                 </div>
